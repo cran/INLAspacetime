@@ -1,7 +1,8 @@
 #' To retrieve goodness of fit statistics.
 #'
-#' Extracts dic, waic and log-cpo from an [INLA::inla()] output and
-#' computes log-po, mse, mae, crps and scrps for a given input.
+#' Extracts dic, waic and log-cpo from an output returned by the inla function
+#' from the INLA package or by the bru function from the inlabru package,
+#' and computes log-po, mse, mae, crps and scrps for a given input.
 #' A summary is applied considering the user imputed function,
 #' which by default is the mean.
 #'
@@ -70,36 +71,42 @@
 #' @export
 #'
 #' @importFrom stats dnorm pnorm complete.cases
-stats.inla <- function(m, i=NULL, y, fsummarize=mean) {
-    crps.g <- function(y, m, s) {
-        md <- y-m
-        s/sqrt(pi) - 2*s*dnorm(md/s) + md*(1-2*pnorm(md/s))
-    }
-    scrps.g <- function(y, m, s) {
-        md <- y-m
-        -0.5 * log(2*s/sqrt(pi)) -sqrt(pi) *
-            (s*dnorm(md/s)-md/2+md*pnorm(md/s))/s
-    }
-    if(is.null(i))
-      i <- 1:length(m$dic$local.dic)
-    r <- c(
-      dic=fsummarize(m$dic$local.dic[i]),
-      waic=fsummarize(m$waic$local.waic[i]),
-      lpo=-fsummarize(dnorm(
-        y[i], m$summary.fitted.value$mean[i],
-        sqrt(m$summary.fitted.value$sd[i]^2 +
-              1/m$summary.hyperpar$mean[1]), log=TRUE)),
-      lcpo=-fsummarize(log(m$cpo$cpo[i])),
-      mse=fsummarize((m$summary.fitted.value$mean[i]-y[i])^2),
-      mae=fsummarize(abs(m$summary.fitted.value$mean[i]-y[i])),
-      crps=-fsummarize(crps.g(
-                 y[i], m$summary.fitted.value$mean[i],
-                 sqrt(m$summary.fitted.value$sd[i]^2 +
-                 1/m$summary.hyperpar$mean[1]))),
-      scrps=-fsummarize(scrps.g(
-        y[i],
-        m$summary.fitted.val$mean[i],
-        sqrt(m$summary.fitted.val$sd[i]^2 +
-             1/m$summary.hyperpar$mean[1]))))
-    return(r)
+stats.inla <- function(m, i = NULL, y, fsummarize = mean) {
+  crps.g <- function(y, m, s) {
+    md <- y - m
+    s / sqrt(pi) - 2 * s * dnorm(md / s) + md * (1 - 2 * pnorm(md / s))
+  }
+  scrps.g <- function(y, m, s) {
+    md <- y - m
+    -0.5 * log(2 * s / sqrt(pi)) - sqrt(pi) *
+      (s * dnorm(md / s) - md / 2 + md * pnorm(md / s)) / s
+  }
+  if (is.null(i)) {
+    i <- 1:length(m$dic$local.dic)
+  }
+  r <- c(
+    dic = fsummarize(m$dic$local.dic[i]),
+    waic = fsummarize(m$waic$local.waic[i]),
+    lpo = -fsummarize(dnorm(
+      y[i], m$summary.fitted.value$mean[i],
+      sqrt(m$summary.fitted.value$sd[i]^2 +
+        1 / m$summary.hyperpar$mean[1]),
+      log = TRUE
+    )),
+    lcpo = -fsummarize(log(m$cpo$cpo[i])),
+    mse = fsummarize((m$summary.fitted.value$mean[i] - y[i])^2),
+    mae = fsummarize(abs(m$summary.fitted.value$mean[i] - y[i])),
+    crps = -fsummarize(crps.g(
+      y[i], m$summary.fitted.value$mean[i],
+      sqrt(m$summary.fitted.value$sd[i]^2 +
+        1 / m$summary.hyperpar$mean[1])
+    )),
+    scrps = -fsummarize(scrps.g(
+      y[i],
+      m$summary.fitted.val$mean[i],
+      sqrt(m$summary.fitted.val$sd[i]^2 +
+        1 / m$summary.hyperpar$mean[1])
+    ))
+  )
+  return(r)
 }

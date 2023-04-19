@@ -1,4 +1,4 @@
-#' Functions for easier code to fit of some models with INLA.
+#' Spatial and Spatio-Temporal Models using INLA
 #'
 #' This package main purpose is to provide user friendly functions
 #' to fit temporal, spatial and spatio-temporal models using the
@@ -14,4 +14,5 @@
 INLAspacetime <- function() {
   print("Welcome to the INLAspacetime package!")
   utils::browseVignettes("INLAspacetime")
+##  utils::browseURL("https://eliaskrainski.github.io/INLAspacetime")
 }

@@ -6,9 +6,10 @@
 \usage{
 barrierModel.define(
   mesh,
-  barrierTriangles,
-  control.priors,
-  fraction = 0.2,
+  barrier.triangles,
+  prior.range,
+  prior.sigma,
+  range.fraction = 0.2,
   constr = FALSE,
   debug = FALSE,
   verbose = FALSE,
@@ -19,17 +20,20 @@ barrierModel.define(
 \arguments{
 \item{mesh}{a spatial mesh}
 
-\item{barrierTriangles}{a integer vector to specify which
+\item{barrier.triangles}{a integer vector to specify which
 triangles centers are in the barrier domain}
 
-\item{control.priors}{a named list with parameter priors.
-E.g. prior.rs and prior.sigma
-as vectors with length two (U, a) to define the
-corresponding PC-prior such that
-P(r_s<U)=a and P(sigma>U)=a.
-If a=0 then U is taken to be the fixed value of the parameter.}
+\item{prior.range}{numeric vector containing U and a
+to define the probability statements P(range < U) = a
+used to setup the PC-prior for range.
+If a = 0 then U is taken to be the fixed value for the range.}
 
-\item{fraction}{numeric to specify the fraction of the range
+\item{prior.sigma}{numeric vector containing U and a
+to define the probability statements P(range > U) = a
+used to setup the PC-prior for sigma.
+If a = 0 then U is taken to be the fixed value for sigma.}
+
+\item{range.fraction}{numeric to specify the fraction of the range
 for the barrier domain. Default value is 0.2.}
 
 \item{constr}{logical to indicate if the integral of the field

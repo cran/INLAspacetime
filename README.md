@@ -7,11 +7,10 @@
 
 [![CRAN
 Status](http://www.r-pkg.org/badges/version-last-release/INLAspacetime)](https://cran.r-project.org/package=INLAspacetime)
-[![R build
-status](https://github.com/eliaskrainski/INLAspacetime/workflows/R-CMD-check/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions)
-<!--[![R code coverage status](https://github.com/eliaskrainski/INLAspacetime/workflows/test-coverage/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions) -->
-<!--[![lintr status](https://github.com/eliaskrainski/INLAspacetime/workflows/lint/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions) -->
-<!-- [![Codecov test coverage](https://codecov.io/gh/eliaskrainski/INLAspacetime/branch/master/graph/badge.svg)](https://app.codecov.io/gh/eliaskrainski/INLAspacetime?branch=master) -->
+[![check
+no-suggestions](https://github.com/eliaskrainski/INLAspacetime/workflows/R-CMD-check-no-suggests/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions)
+[![check](https://github.com/eliaskrainski/INLAspacetime/workflows/R-CMD-check/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions)
+[![pkgdown](https://github.com/eliaskrainski/INLAspacetime/workflows/pkgdown/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions)
 <!-- badges: end -->
 
 This is a R package to implement certain spatial and spatio-temporal
@@ -19,19 +18,14 @@ models taking use to the `cgeneric` interface in the INLA package. This
 interface is a way to implement models by writing `C` code to build the
 precision matrix compiling it so that INLA can use it internally.
 
-## We have implemented
-
-1.  some of the models presented in <https://arxiv.org/abs/2006.04917>
-
-2.  the barrier model proposed in
-    <https://doi.org/10.1016/j.spasta.2019.01.002>
-
 ## Installation
 
-<!-- You can install the current [CRAN](https://CRAN.R-project.org) version of INLAspacetime: -->
-<!-- ```{r cran-installation, eval = FALSE} -->
-<!-- install.packages("INLAspacetime") -->
-<!-- ``` -->
+You can install the current [CRAN](https://CRAN.R-project.org) version
+of INLAspacetime:
+
+``` r
+install.packages("INLAspacetime")
+```
 
 You can install the latest version of INLAspacetime from
 [GitHub](https://github.com/eliaskrainski/INLAspacetime) with
@@ -58,6 +52,13 @@ remotes::install_github("eliaskrainski/INLAspacetime")
 We will have tutorials and examples at
 <https://eliaskrainski.github.io/INLAspacetime/>
 
+## We have implemented
+
+1.  some of the models presented in <https://arxiv.org/abs/2006.04917>
+
+2.  the barrier model proposed in
+    <https://doi.org/10.1016/j.spasta.2019.01.002>
+
 # Example
 
 This is a basic example which fit a spacetime model for some fake data.
@@ -72,10 +73,10 @@ dataf <- data.frame(
     y    = rnorm(n, 0, 1))
 str(dataf)
 #> 'data.frame':    5 obs. of  4 variables:
-#>  $ s1  : num  0.6989 0.0894 -0.87 -0.04 0.6806
-#>  $ s2  : num  0.862 -0.966 -0.545 0.177 -0.314
-#>  $ time: num  2.75 1.17 2.12 2.33 1.47
-#>  $ y   : num  0.331 -0.272 -1.527 0.41 -0.201
+#>  $ s1  : num  -0.6356 0.9393 0.0412 0.5453 -0.5449
+#>  $ s2  : num  -0.3682 -0.0183 0.1753 0.1072 -0.5612
+#>  $ time: num  2.46 2.37 2.53 3.52 2.58
+#>  $ y   : num  -1.8367 0.4838 -0.7167 -2.0985 -0.0881
 ```
 
 Loading the packages:
@@ -86,7 +87,7 @@ library(INLA)
 #> Loading required package: foreach
 #> Loading required package: parallel
 #> Loading required package: sp
-#> This is INLA_23.04.02 built 2023-04-02 09:28:58 UTC.
+#> This is INLA_23.04.11-1 built 2023-04-10 23:36:48 UTC.
 #>  - See www.r-inla.org/contact-us for how to get help.
 #>  - To enable PARDISO sparse library; see inla.pardiso()
 library(INLAspacetime)
@@ -113,7 +114,7 @@ stmodel <- stModel.define(
     model = '121', ## model, see the paper
     control.priors = list(
         prs = c(1, 0.1), ## P(spatial range < 1) = 0.1
-        prt = c(5, 0), ## fixed to 5
+        prt = c(5, 0), ## temporal range fixed to 5
         psigma = c(1, 0.1) ## P(sigma > 1) = 0.1
         )
     )
@@ -131,13 +132,17 @@ linpred <- ~ 1 +
 Setting the likelihood
 
 ``` r
-likeprec <- list(prec = list(
-  initial = 10, fixed = FALSE))
+ctrlf <- list(
+  hyper = list(
+    prec = list(
+      initial = 10, 
+      fixed = TRUE)    
+  )
+)
 datalike <- like(
   formula = y ~ ., 
   family = "gaussian",
-  control.family = list(
-    hyper = likeprec), ## TO DO: not going through bru
+  control.family = ctrlf, 
   data=dataf)
 ```
 
@@ -162,15 +167,10 @@ Summary of the model parameters
 
 ``` r
 result$summary.fixed
-#>                mean       sd 0.025quant  0.5quant 0.975quant      mode kld
-#> Intercept -0.344202 0.860469   -2.03069 -0.344202   1.342286 -0.344202   0
+#>                 mean       sd 0.025quant   0.5quant 0.975quant       mode kld
+#> Intercept -0.8506661 2.332798  -5.422866 -0.8506661   3.721533 -0.8506661   0
 result$summary.hyperpar
-#>                                                 mean           sd   0.025quant
-#> Precision for the Gaussian observations 1.866595e+04 1.834440e+04 1248.0184137
-#> Theta1 for field                        6.731328e-01 3.740663e-01   -0.1080038
-#> Theta2 for field                        2.406610e-01 2.582889e-01   -0.2380983
-#>                                             0.5quant   0.975quant         mode
-#> Precision for the Gaussian observations 1.313229e+04 6.751503e+04 3420.4929806
-#> Theta1 for field                        6.877632e-01 1.369484e+00    0.7487895
-#> Theta2 for field                        2.297805e-01 7.775845e-01    0.1873727
+#>                       mean        sd 0.025quant  0.5quant 0.975quant      mode
+#> Theta1 for field 0.8154733 0.3535697  0.1409908 0.8069905   1.533857 0.7746979
+#> Theta2 for field 1.1647245 0.1899606  0.8015195 1.1604630   1.549799 1.1443398
 ```
