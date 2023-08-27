@@ -7,6 +7,7 @@
 
 [![CRAN
 Status](http://www.r-pkg.org/badges/version-last-release/INLAspacetime)](https://cran.r-project.org/package=INLAspacetime)
+[![](https://cranlogs.r-pkg.org/badges/INLAspacetime)](https://cran.r-project.org/package=INLAspacetime)
 [![check
 no-suggestions](https://github.com/eliaskrainski/INLAspacetime/workflows/R-CMD-check-no-suggests/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions)
 [![check](https://github.com/eliaskrainski/INLAspacetime/workflows/R-CMD-check/badge.svg)](https://github.com/eliaskrainski/INLAspacetime/actions)
@@ -32,7 +33,7 @@ You can install the latest version of INLAspacetime from
 
 ``` r
 ## install.packages("remotes")
-remotes::install_github("eliaskrainski/INLAspacetime")
+remotes::install_github("eliaskrainski/INLAspacetime",  build_vignettes=TRUE)
 ```
 
 <!-- or track the development version builds via [inlabru-org.r-universe.dev](https://inlabru-org.r-universe.dev/ui#builds): -->
@@ -47,11 +48,6 @@ remotes::install_github("eliaskrainski/INLAspacetime")
 <!-- install.packages("INLAspacetime") -->
 <!-- ``` -->
 
-# See the vignettes for examples
-
-We will have tutorials and examples at
-<https://eliaskrainski.github.io/INLAspacetime/>
-
 ## We have implemented
 
 1.  some of the models presented in <https://arxiv.org/abs/2006.04917>
@@ -65,6 +61,7 @@ This is a basic example which fit a spacetime model for some fake data.
 The model fitting using **inlabru** facilitates coding.
 
 ``` r
+set.seed(1)
 n <- 5
 dataf <- data.frame(
     s1   = runif(n, -1, 1),
@@ -73,10 +70,10 @@ dataf <- data.frame(
     y    = rnorm(n, 0, 1))
 str(dataf)
 #> 'data.frame':    5 obs. of  4 variables:
-#>  $ s1  : num  -0.6356 0.9393 0.0412 0.5453 -0.5449
-#>  $ s2  : num  -0.3682 -0.0183 0.1753 0.1072 -0.5612
-#>  $ time: num  2.46 2.37 2.53 3.52 2.58
-#>  $ y   : num  -1.8367 0.4838 -0.7167 -2.0985 -0.0881
+#>  $ s1  : num  -0.469 -0.256 0.146 0.816 -0.597
+#>  $ s2  : num  0.797 0.889 0.322 0.258 -0.876
+#>  $ time: num  1.62 1.53 3.06 2.15 3.31
+#>  $ y   : num  -0.00577 2.40465 0.76359 -0.79901 -1.14766
 ```
 
 Loading the packages:
@@ -87,7 +84,11 @@ library(INLA)
 #> Loading required package: foreach
 #> Loading required package: parallel
 #> Loading required package: sp
-#> This is INLA_23.04.11-1 built 2023-04-10 23:36:48 UTC.
+#> The legacy packages maptools, rgdal, and rgeos, underpinning this package
+#> will retire shortly. Please refer to R-spatial evolution reports on
+#> https://r-spatial.org/r/2023/05/15/evolution4.html for details.
+#> This package is now running under evolution status 0
+#> This is INLA_23.05.30-1 built 2023-05-30 11:52:19 UTC.
 #>  - See www.r-inla.org/contact-us for how to get help.
 #>  - To enable PARDISO sparse library; see inla.pardiso()
 library(INLAspacetime)
@@ -167,10 +168,15 @@ Summary of the model parameters
 
 ``` r
 result$summary.fixed
-#>                 mean       sd 0.025quant   0.5quant 0.975quant       mode kld
-#> Intercept -0.8506661 2.332798  -5.422866 -0.8506661   3.721533 -0.8506661   0
+#>                mean      sd 0.025quant  0.5quant 0.975quant      mode kld
+#> Intercept 0.5211454 3.49482  -6.328575 0.5211454   7.370866 0.5211454   0
 result$summary.hyperpar
-#>                       mean        sd 0.025quant  0.5quant 0.975quant      mode
-#> Theta1 for field 0.8154733 0.3535697  0.1409908 0.8069905   1.533857 0.7746979
-#> Theta2 for field 1.1647245 0.1899606  0.8015195 1.1604630   1.549799 1.1443398
+#>                      mean        sd 0.025quant 0.5quant 0.975quant      mode
+#> Theta1 for field 1.202935 0.5125858  0.3321324 1.162519   2.324768 0.9707531
+#> Theta2 for field 1.435746 0.1706775  1.1044643 1.434143   1.776487 1.4273398
 ```
+
+## Vignettes
+
+Please check it out at the
+[Tutorials](https://eliaskrainski.github.io/INLAspacetime/)
