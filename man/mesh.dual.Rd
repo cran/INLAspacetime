@@ -4,18 +4,25 @@
 \alias{mesh.dual}
 \title{Extracts the dual of a mesh object.}
 \usage{
-mesh.dual(mesh, SP = TRUE, mc.cores = getOption("mc.cores", 2L))
+mesh.dual(
+  mesh,
+  returnclass = c("list", "sf", "sv", "SP"),
+  mc.cores = getOption("mc.cores", 2L)
+)
 }
 \arguments{
 \item{mesh}{a 2d mesh object.}
 
-\item{SP}{logical indicating if the output is to be returned
-as a SpatialPolygons object. Default is TRUE.}
+\item{returnclass}{if
+'list' return a list of polygon coordinates,
+if "sf" return a 'sf' sfc_multipolygon object,
+if "sv" return a 'terra', SpatVector object,
+if "SP" return a 'sp' SpatialPolygons object.}
 
 \item{mc.cores}{number of threads to be used.}
 }
 \value{
-a list of polygons or a SpatialPolygons object.
+one of the three in 'returnclass'
 }
 \description{
 Extracts the dual of a mesh object.

@@ -2,24 +2,31 @@
 % Please edit documentation in R/paramsUtils.R
 \name{paramsUtils}
 \alias{paramsUtils}
-\alias{gsConstant}
+\alias{lgsConstant}
 \alias{gammas2params}
 \alias{params2gammas}
-\title{Funtions to help converting from/to user/internal parametrization.}
+\title{Functions to help converting
+from/to user/internal parametrization.
+The internal parameters are
+'gamma_s, 'gamma_t', 'gamma_E'
+The user parameters are
+'r_s', 'r_t', 'sigma'}
 \usage{
-gsConstant(lgammas, alpha, smanifold)
-
-gammas2params(lgammas, alpha.t, alpha.s, alpha.e, smanifold = "R2")
+lgsConstant(lg.s, alpha, smanifold)
 
 params2gammas(lparams, alpha.t, alpha.s, alpha.e, smanifold = "R2")
+
+gammas2params(lgammas, alpha.t, alpha.s, alpha.e, smanifold = "R2")
 }
 \arguments{
-\item{lgammas}{the SPDE parameters log(gamma.s, gamma.t, gamma.e)}
+\item{lg.s}{the logarithm of the SPDE parameter \verb{\\gamma_s}}
 
-\item{alpha}{the resulting spatial order.
-Values could be "S1", "S2", "R1", "R2" and "R3".}
+\item{alpha}{the resulting spatial order.}
 
-\item{smanifold}{spatial domain manifold.}
+\item{smanifold}{spatial domain manifold, which could be
+"S1", "S2", "R1", "R2" and "R3".}
+
+\item{lparams}{log(spatial range, temporal range, sigma)}
 
 \item{alpha.t}{temporal order of the SPDE}
 
@@ -29,19 +36,38 @@ in the non-separable part.}
 \item{alpha.e}{spatial order of the spatial differential operator
 in the separable part.}
 
-\item{lparams}{log(spatial range, temporal range, sigma)}
+\item{lgammas}{numeric of length 3 with
+\eqn{log(\gamma_k)}{log(gamma[k])}
+model parameters. The parameter order is
+log(gamma.s, gamma.t, gamma.e)}
 }
 \value{
-the part of sigma due to spatial constant and gamma.s
-
-log(spatial range, temporal range, sigma)
+the part of \code{sigma} from the spatial constant and \verb{\\gamma_s}.
 
 log(gamma.s, gamma.t, gamma.e)
+
+log(spatial range, temporal range, sigma)
 }
 \description{
-Funtions to help converting from/to user/internal parametrization.
+Functions to help converting
+from/to user/internal parametrization.
+The internal parameters are
+'gamma_s, 'gamma_t', 'gamma_E'
+The user parameters are
+'r_s', 'r_t', 'sigma'
+
+Convert from user parameters to SPDE parameters
+
+Convert from SPDE parameters to user parameters
+}
+\details{
+See equation (23) in the paper.
+
+See equations (19), (20) and (21) in the paper.
+
+See equations (19), (20) and (21) in the paper.
 }
 \examples{
-gammas2params(log(c(0, 0, 0)), 1, 2, 1, "R2")
 params2gammas(log(c(1, 1, 1)), 1, 2, 1, "R2")
+gammas2params(log(c(0, 0, 0)), 1, 2, 1, "R2")
 }

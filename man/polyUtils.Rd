@@ -3,22 +3,36 @@
 \name{Heron}
 \alias{Heron}
 \alias{Area}
+\alias{s2trArea}
+\alias{flatArea}
 \alias{Stiffness}
-\title{Internal util functions}
+\title{Internal util functions for polygon properties.}
 \usage{
 Heron(x, y)
 
 Area(x, y)
 
-Stiffness(x, y)
+s2trArea(tr, R = 1)
+
+flatArea(tr)
+
+Stiffness(tr)
 }
 \arguments{
 \item{x, y}{coordinate vectors.}
+
+\item{tr}{the triangle coordinates}
+
+\item{R}{the radius of the spherical domain}
 }
 \value{
-the area of a triangle
+the area of a 2d triangle
 
-the area of a general polygon
+the area of a 2d polygon
+
+the area of a triangle in S2
+
+the area of a triangle
 
 the stiffness matrix for a triangle
 }

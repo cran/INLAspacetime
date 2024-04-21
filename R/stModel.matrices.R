@@ -19,65 +19,32 @@ stModel.precision <-
 
     stopifnot(model %in% c("102", "121", "202", "220"))
 
-    stopifnot(any(substr(smesh$manifold, 1, 1) %in% c("S", "R")))
-    Rmanifold <- (substr(smesh$manifold, 1, 1) == "R") + 0L
+    stopifnot(fm_manifold(smesh, c("S", "R")))
+    Rmanifold <- fm_manifold(smesh, "R") + 0L
 
-    dimension <- as.integer(substr(smesh$manifold, 2, 2))
+    dimension <- fm_manifold_dim(smesh)
     stopifnot(dimension > 0)
 
     alphas <- as.integer(strsplit(model, "")[[1]])
-    alpha <- alphas[3] + alphas[2] * (alphas[1] - 0.5)
-    nu.s <- alpha - dimension / 2
-    nu.t <- min(alphas[1] - 0.5, nu.s / alphas[2])
-
-    if (verbose) {
-      print(c(alphas = alphas))
-      print(c(alpha = alpha, nu.s = nu.s, nu.t = nu.t))
-    }
-
-    log.C.t <- lgamma(alphas[1] - 0.5) - lgamma(alphas[1]) - 0.5 * log(4 * pi)
-    cc <- c(
-      c1 = 0.5 * log(8 * nu.s),
-      c2 = -0.5 * log(8 * nu.t),
-      c3 = NA
-    )
-    if (Rmanifold) {
-      log.C.Rd <- lgamma(alpha - (dimension * 0.5)) - lgamma(alpha) -
-        (dimension * 0.5) * log(4 * pi)
-      cc[3] <- 0.5 * (log.C.t + log.C.Rd)
-      if (verbose) {
-        cat("R manifold, cc[3] = ", cc[3], "\n")
-      }
-    } else {
-      log.C.S2.part <- -log(4 * pi) ## S1???
-      cc[3] <- 0.5 * (log.C.t + log.C.S2.part
-      ) ## c3 part for S2 (S1???), to be completed in C
-      if (verbose) {
-        cat("S manifold, cc[3] = ", cc[3], "\n")
-      }
-    }
-    if (verbose) {
-      print(c(cc = cc))
-    }
+    lgammas <- params2gammas(
+      theta, alphas[1], alphas[2], alphas[3], smanifold = smesh$manifold)
 
     mm <- stModel.matrices(smesh, tmesh, model, constr = FALSE)
+
     n <- smesh$n * tmesh$n
     nm <- ncol(mm$TT)
     stopifnot(nm == length(mm$bb))
     jmm <- pmatch(paste0("M", 1:nm), names(mm))
     stopifnot(length(jmm[complete.cases(jmm)]) == nm)
 
-    lgammas <- params2gammas(
-      theta, alphas[1], alphas[2], alphas[3], smanifold = smesh$manifold)
+    lmats <- upperPadding(mm[jmm], relative = FALSE)
 
     params <- double(nm)
     for(i in 1:nm) {
       a1 <- lgammas[1] * mm$TT[1, i]
-      a2 <- lgammas[1] * mm$TT[2, i]
+      a2 <- lgammas[2] * mm$TT[2, i]
       params[i] <- exp(2 * (lgammas[3] + a1 + a2) * mm$bb[i])
     }
-
-    lmats <- upperPadding(mm[jmm], relative = FALSE)
 
     val <- sparseMatrix(
       i = lmats$graph@i + 1L,
@@ -111,6 +78,7 @@ stModel.precision <-
 #' 4. the matrix `T`
 #' 5. the model matrices `M_1`, ..., `M_m`
 #' @export
+#' @importFrom fmesher fm_fem
 stModel.matrices <-
   function(smesh, tmesh, model, constr = FALSE) {
     stopifnot(inherits(smesh, "inla.mesh"))
@@ -295,6 +263,9 @@ stModel.matrices <-
 #' @param tmesh Temporal mesh
 #' @return return a list of temporal finite element method matrices
 #' for the supplied mesh.
+#' @details
+#' Temporal GMRF representation with stationary boundary conditions
+#' as in Appendix E of the paper.
 #' @export
 Jmatrices <- function(tmesh) {
   tfe <- fmesher::fm_fem(tmesh, order = 2L)
@@ -302,42 +273,48 @@ Jmatrices <- function(tmesh) {
   h <- mean(diff(tmesh$loc))
 
   J0 <- tfe$c0
-  J0[2, 2] <- tfe$c0[2, 2] / 2
-  J0[nt - 1, nt - 1] <- tfe$c0[nt - 1, nt - 1] / 2
+  if (!tmesh$cyclic) {
+    J0[2, 2] <- tfe$c0[2, 2] / 2
+    J0[nt - 1, nt - 1] <- tfe$c0[nt - 1, nt - 1] / 2
+  }
 
   if (tmesh$cyclic) {
     J1 <- NULL
   } else {
     J1 <- Matrix::sparseMatrix(
-      i = c(1, 1, 2, nt - 1, nt - 1, nt),
-      j = c(1, 2, 2, nt - 1, nt, nt),
-      x = c(5, -1, 5, 5, -1, 5) / 4
+      i = c(1,  1,  2, 2, nt - 1, nt - 1,     nt, nt),
+      j = c(1,  2,  1, 2, nt - 1,     nt, nt - 1, nt),
+      x = c(5, -1, -1, 5,      5,     -1,     -1,  5) / 4
     )
   }
 
   J2 <- tfe$g1 * 2
-  J2[2, 2] <- tfe$g1[2, 2]
-  J2[1, 2] <- J2[2, 1] <- tfe$g1[1, 2]
-  J2[nt, nt - 1] <- J2[nt - 1, nt] <- tfe$g1[nt, nt - 1]
-  J2[nt - 1, nt - 1] <- tfe$g1[nt - 1, nt - 1]
+  if (!tmesh$cyclic) {
+    J2[2, 2] <- tfe$g1[2, 2]
+    J2[1, 2] <- J2[2, 1] <- tfe$g1[1, 2]
+    J2[nt, nt - 1] <- J2[nt - 1, nt] <- tfe$g1[nt, nt - 1]
+    J2[nt - 1, nt - 1] <- tfe$g1[nt - 1, nt - 1]
+  }
 
   if (tmesh$cyclic) {
     J3 <- NULL
   } else {
     J3 <- Matrix::sparseMatrix(
-      i = c(1, 1, 2, nt - 1, nt - 1, nt),
-      j = c(1, 2, 2, nt - 1, nt, nt),
-      x = c(2, -2, 2, 2, -2, 2) / (h^2)
+      i = c(1,  1,  2, 2, nt-1, nt-1,   nt, nt),
+      j = c(1,  2,  1, 2, nt-1,   nt, nt-1, nt),
+      x = c(2, -2, -2, 2,   2,   -2,    -2,  2) / (h^2)
     )
   }
 
   J4 <- tfe$g2
-  J4[1, 1] <- tfe$g2[1, 1] / 3
-  J4[nt, nt] <- tfe$g2[nt, nt] / 3
-  J4[1, 2] <- J4[2, 1] <- tfe$g2[1, 2] / 2
-  J4[nt - 1, nt] <- J4[nt, nt - 1] <- tfe$g2[nt - 1, nt] / 2
-  J4[2, 2] <- tfe$g2[2, 2] * 5 / 7
-  J4[nt - 1, nt - 1] <- tfe$g2[nt - 1, nt - 1] * 5 / 7
+  if (!tmesh$cyclic) {
+    J4[1, 1] <- tfe$g2[1, 1] / 3
+    J4[nt, nt] <- tfe$g2[nt, nt] / 3
+    J4[1, 2] <- J4[2, 1] <- tfe$g2[1, 2] / 2
+    J4[nt - 1, nt] <- J4[nt, nt - 1] <- tfe$g2[nt - 1, nt] / 2
+    J4[2, 2] <- tfe$g2[2, 2] * 5 / 7
+    J4[nt - 1, nt - 1] <- tfe$g2[nt - 1, nt - 1] * 5 / 7
+  }
 
   return(list(J0 = J0, J1 = J1, J2 = J2, J3 = J3, J4 = J4))
 }

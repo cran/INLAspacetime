@@ -15,6 +15,13 @@ mesh2fem <- function(mesh, order = 2, barrier.triangles = NULL) {
       barrier.triangles = barrier.triangles
     ))
   }
+
+  stopifnot(fm_manifold(mesh, c("S", "R")))
+  Rmanifold <- fm_manifold(mesh, "R") + 0L
+
+  dimension <- fm_manifold_dim(mesh)
+  stopifnot(dimension > 1)
+
   n <- nrow(mesh$loc)
   ntv <- nrow(mesh$graph$tv)
   ta <- rep(0, ntv)
@@ -27,16 +34,18 @@ mesh2fem <- function(mesh, order = 2, barrier.triangles = NULL) {
   ncg <- 0
   for (j in 1:ntv) {
     it <- mesh$graph$tv[j, ]
-    h <- Heron(mesh$loc[it, 1], mesh$loc[it, 2])
+    if(Rmanifold==0) {
+      h <- s2trArea(mesh$loc[it, ])
+    } else {
+      h <- Heron(mesh$loc[it, 1], mesh$loc[it, 2])
+    }
     ta[j] <- h
     c0[it] <- c0[it] + h / 3
     ii[ncg + 1:9] <- it[ii0]
     jj[ncg + 1:9] <- it[jj0]
     c1x[ncg + 1:9] <- h * c1aux / 12
-    g1x[ncg + 1:9] <- Stiffness(
-      mesh$loc[it, 1],
-      mesh$loc[it, 2]
-    ) / h
+    fa <- flatArea(mesh$loc[it, ])
+    g1x[ncg + 1:9] <- Stiffness(mesh$loc[it, ]) / fa
     ncg <- ncg + 9L
   }
   ijx <- which((ii > 0) | (jj > 0))
@@ -74,6 +83,28 @@ mesh2fem.barrier <- function(mesh, barrier.triangles = NULL) {
     warning("No 'barrier.triangles', using 'mesh2fem(mesh, order = 2)'!")
     return(mesh2fem(mesh = mesh, order = 2L))
   }
+
+  stopifnot(fm_manifold(mesh, c("S", "R")))
+  Rmanifold <- fm_manifold(mesh, "R") + 0L
+
+  dimension <- fm_manifold_dim(mesh)
+  stopifnot(dimension > 1)
+
+  ### safe to use from triangle area from:
+  hh <- INLA::inla.mesh.fem(mesh, order = 1)$ta
+  if(Rmanifold==0) {
+    R.i <- sqrt(rowSums(mesh$loc^2))
+    hh <- sapply(1:nrow(mesh$graph$tv), function(i) {
+      it <- mesh$graph$tv[i, ]
+      s2trArea(mesh$loc[it, ], R.i[1])
+    })
+  } else {
+    hh <- sapply(1:nrow(mesh$graph$tv), function(i) {
+      it <- mesh$graph$tv[i, ]
+      Heron(mesh$loc[it, 1], mesh$loc[it, 2])
+    })
+  }
+
   barrier.triangles <- unique(sort(barrier.triangles))
   itv <- list(
     setdiff(
@@ -108,7 +139,9 @@ mesh2fem.barrier <- function(mesh, barrier.triangles = NULL) {
     ng <- nc <- 0
     for (j in itv[[o]]) {
       it <- mesh$graph$tv[j, ]
-      h <- Heron(mesh$loc[it, 1], mesh$loc[it, 2])
+      h <- hh[it]
+      fa <- flatArea(mesh$loc[it, ])
+      g1x[ng + 1:9] <- Stiffness(mesh$loc[it, ]) / fa
 
       c0[it] <- c0[it] + h / 3
       iic[nc + 1:9] <- it[ii0c]
@@ -117,10 +150,6 @@ mesh2fem.barrier <- function(mesh, barrier.triangles = NULL) {
 
       iig[ng + 1:9] <- it[ii0g]
       jjg[ng + 1:9] <- it[jj0g]
-      g1x[ng + 1:9] <- Stiffness(
-        mesh$loc[it, 1],
-        mesh$loc[it, 2]
-      ) / h
 
       nc <- nc + 9L
       ng <- ng + 9L
@@ -135,7 +164,7 @@ mesh2fem.barrier <- function(mesh, barrier.triangles = NULL) {
     res$D[[o]] <- INLA::inla.as.dgTMatrix(Matrix::sparseMatrix(
       i = iig[ijxg], j = jjg[ijxg], x = g1x[ijxg], dims = c(n, n)
     ))
-    res$C[[o]] <- c0 * 3
+    res$C[[o]] <- c0 ## * 3
     res$hdim <- res$hdim + 1L
   }
   res$I <- INLA::inla.as.dgTMatrix(res$I)

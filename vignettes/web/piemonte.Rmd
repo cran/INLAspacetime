@@ -49,17 +49,6 @@ library(INLAspacetime)
 library(inlabru)
 ```
 
-We consider the following settings for **INLA**
-
-```{r inlasetup}
-#inla.setOption(
-#  inla.mode = "compact",
-#  num.threads = "5:-1",
-#  smtp = "pardiso",
-#  pardiso.license = "~/.pardiso.lic"
-#)
-```
-
 We will ask it to return the WAIC, DIC and CPO 
 ```{r ctrc}
 ctrc <- list(
@@ -296,11 +285,6 @@ fit102 <-
   <<fitcode>>
 ```
 
-The computing time is
-```{r cpu1}
-fit102$cpu
-```
-
 Summary of the posterior marginal distributions for the fixed effects 
 ```{r sfixef}
 fit102$summary.fixed[, c(1, 2, 3, 5)]
@@ -370,7 +354,7 @@ results <- list("u102" = fit102, "u121" = fit121)
 
 The computing time for each model fit
 ```{r cpu}
-sapply(results, function(r) r$cpu)
+sapply(results, function(r) r$cpu.used)
 ```
 and the number of fn-calls during the optimization are
 ```{r nfn}

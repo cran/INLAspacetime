@@ -1,4 +1,4 @@
-#' Donload the data files used
+#' Download files from the NOAA's GHCN daily data
 #' @aliases donwloadUtilFiles
 #' @param data.dir the folder to store the files.
 #' @param year the year of the daily weather data.
@@ -19,7 +19,11 @@ downloadUtilFiles <- function(data.dir, year = 2022, force = FALSE) {
   ### daily weather data for a given year
   dfl <- paste0(year, ".csv.gz")
   loc.dfl <- file.path(data.dir, dfl)
-  if (force | (!file.exists(loc.dfl))) {
+  fle <- file.exists(loc.dfl)
+  if (force | (!fle)) {
+    if(fle) {
+      file.remove(loc.dfl)
+    }
     utils::download.file(
       url = paste0(ghcnd, "by_year/", dfl),
       destfile = loc.dfl
@@ -29,7 +33,11 @@ downloadUtilFiles <- function(data.dir, year = 2022, force = FALSE) {
   ### all the available stations information
   sfl <- "ghcnd-stations.txt"
   loc.sfl <- file.path(data.dir, sfl)
-  if (force | (!file.exists(loc.sfl))) {
+  fle <- file.exists(loc.dfl)
+  if (force | (!fle)) {
+    if(fle) {
+      file.remove(loc.sfl)
+    }
     utils::download.file(
       url = paste0(ghcnd, sfl),
       destfile = loc.sfl
@@ -39,7 +47,11 @@ downloadUtilFiles <- function(data.dir, year = 2022, force = FALSE) {
   ### elevation data
   efl <- "ETOPO2.RData"
   loc.efl <- file.path(data.dir, efl)
-  if (force | (!file.exists(loc.efl))) {
+  fle <- file.exists(loc.efl)
+  if (force | (!fle)) {
+    if(fle) {
+      file.remove(loc.efl)
+    }
     utils::download.file(
       url = paste0(
         "http://leesj.sites.oasis.unc.edu/",
@@ -62,6 +74,7 @@ downloadUtilFiles <- function(data.dir, year = 2022, force = FALSE) {
 #' \url{https://www.ncei.noaa.gov/pub/data/ghcn/daily/by_year/}
 #' see references bellow.
 #' @param variable string with the variable name(s) to be selected
+#' @param station string (vector) with the station(s) to be selected
 #' @param qflag a string with quality control flag(s)
 #' @param verbose logical indicating if progress is to be printed
 #' @param astype function to convert data to a class,
@@ -84,6 +97,7 @@ downloadUtilFiles <- function(data.dir, year = 2022, force = FALSE) {
 #' @export
 ghcndSelect <- function(gzfile,
                         variable = c("TMIN", "TAVG", "TMAX"),
+                        station = NULL,
                         qflag = "",
                         verbose = TRUE,
                         astype = as.integer) {
@@ -106,7 +120,7 @@ ghcndSelect <- function(gzfile,
   }
 
   if (verbose) {
-    cat("readed ", nrow(d), "")
+    cat("readed ", nrow(d), "observations.")
     t1 <- Sys.time()
     print(t1 - t0)
   }
@@ -121,13 +135,29 @@ ghcndSelect <- function(gzfile,
 
 
   ii <- ii[which(d$V6[ii] %in% qflag)]
-  d <- d[ii, ]
+    d <- d[ii, ]
 
   if (verbose) {
-    cat("Selected ", length(ii), "observations. ")
+    cat("Selected ", length(ii), "observations.")
     t3 <- Sys.time()
     print(t3 - t2)
   }
+
+    if(is.null(station)) {
+        t4 <- t3
+    } else {
+        ii <- which(d$V1 %in% station)
+        d <- d[ii, ]
+        if (verbose) {
+            cat("Selected ", length(ii),
+                "observations from", length(station),
+                "stations.")
+            t4 <- Sys.time()
+            print(t4 - t3)
+        }
+    }
+
+    if(length(ii)==0) return(NULL)
 
   cnames <- c("day", "station")
   names(d)[2:1] <- cnames
@@ -139,11 +169,12 @@ ghcndSelect <- function(gzfile,
     d <- tapply(d[, 4], d[, cnames[c(2, 1, 3)]], astype)
     d <- d[, , pmatch(variable, dimnames(d)[[3]]), drop = FALSE]
   }
-  if (verbose) {
-    cat("Wide data dim =", dim(d), "")
-    t4 <- Sys.time()
-    print(t4 - t3)
-  }
+
+    if (verbose) {
+        cat("Wide data dim =", dim(d), "")
+        t5 <- Sys.time()
+        print(t5 - t4)
+    }
 
   return(d)
 }
