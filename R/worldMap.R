@@ -8,9 +8,8 @@
 #' Default is the Mollweide projection with units in kilometers.
 #' @param scale see the help from the 'ne_countries'
 #' of the 'rnaturalearth' package
-#' @param returnclass defined by the
-#' [sf] package if returnclass = "sf"
-#' or [terra] if returnclass = "sv".
+#' @param returnclass please see the
+#' [rnaturalearth::ne_countries] help.
 #' @return the world map of the countries.
 #' @references
 #'  The land and ocean maps are obtained with

@@ -18,9 +18,8 @@ Default is the Mollweide projection with units in kilometers.}
 \item{scale}{see the help from the 'ne_countries'
 of the 'rnaturalearth' package}
 
-\item{returnclass}{defined by the
-\link{sf} package if returnclass = "sf"
-or \link{terra} if returnclass = "sv".}
+\item{returnclass}{please see the
+\link[rnaturalearth:ne_countries]{rnaturalearth::ne_countries} help.}
 }
 \value{
 the world map of the countries.

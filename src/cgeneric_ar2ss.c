@@ -86,6 +86,7 @@ double *inla_cgeneric_ar2ss_model(inla_cgeneric_cmd_tp cmd, double *theta, inla_
 	}
 
 	switch (cmd) {
+
 	case INLA_CGENERIC_GRAPH:
 	{
 		int M = N + N - 1, k = 0;
@@ -217,9 +218,6 @@ double *inla_cgeneric_ar2ss_model(inla_cgeneric_cmd_tp cmd, double *theta, inla_
 	}
 		break;
 
-	case INLA_CGENERIC_LOG_NORM_CONST:
-		break;
-
 	case INLA_CGENERIC_LOG_PRIOR:
 	{
 		ret = Calloc(1, double);
@@ -245,6 +243,7 @@ double *inla_cgeneric_ar2ss_model(inla_cgeneric_cmd_tp cmd, double *theta, inla_
 		break;
 
 	case INLA_CGENERIC_VOID:
+        case INLA_CGENERIC_LOG_NORM_CONST:
 	case INLA_CGENERIC_QUIT:
 	default:
 		break;
