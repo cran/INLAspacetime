@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Elias T Krainski" />
+
+
+<title>The SPDE model with transparent barriers</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">The SPDE model with transparent
+barriers</h1>
+<h4 class="author">Elias T Krainski</h4>
+<h4 class="date">October-2024</h4>
+
+
+
+<div id="the-transparent-barrier-model" class="section level1">
+<h1>The transparent barrier model</h1>
+<p>This model considers an SPDE over a domain <span class="math inline">\(\Omega\)</span> which is partitioned into <span class="math inline">\(k\)</span> subdomains <span class="math inline">\(\Omega_d\)</span>, <span class="math inline">\(d\in\{1,\ldots,k\}\)</span>, where <span class="math inline">\(\cup_{d=1}^k\Omega_d=\Omega\)</span>. A common
+marginal variance is assumed but the range can be particular to each
+<span class="math inline">\(\Omega_d\)</span>, <span class="math inline">\(r_d\)</span>.</p>
+<p>From <span class="citation">Bakka et al. (2019)</span>, the precision
+matrix is <span class="math display">\[
+\mathbf{Q} =
+\frac{1}{\sigma^2}\mathbf{R}\mathbf{\tilde{C}}^{-1}\mathbf{R}
+\textrm{ for }
+\mathbf{R}_r = \mathbf{C} +
+\frac{1}{8}\sum_{d=1}^kr_d^2\mathbf{G}_d ,
+\;\;\;
+\mathbf{\tilde{C}}_r =
+\frac{\pi}{2}\sum_{d=1}^kr_d^2\mathbf{\tilde{C}}_d
+\]</span> where <span class="math inline">\(\sigma^2\)</span> is the
+marginal variance. The Finite Element Method - FEM matrices: <span class="math inline">\(\mathbf{C}\)</span>, defined as <span class="math display">\[ \mathbf{C}_{i,j} = \langle \psi_i, \psi_j
+\rangle =
+  \int_\Omega \psi_i(\mathbf{s}) \psi_j(\mathbf{s}) \partial
+\mathbf{s},\]</span> computed over the whole domain, while <span class="math inline">\(\mathbf{G}_d\)</span> and <span class="math inline">\(\mathbf{\tilde{C}}_d\)</span> are defined as a
+pair of matrices for each subdomain <span class="math display">\[
+(\mathbf{G}_d)_{i,j} = \langle 1_{\Omega_d} \nabla \psi_i, \nabla \psi_j
+\rangle =
+  \int_{\Omega_d} \nabla \psi_i(\mathbf{s}) \nabla \psi_j(\mathbf{s})
+\partial \mathbf{s}\; \textrm{ and }\;
+(\mathbf{\tilde{C}}_d)_{i,i} = \langle 1_{\Omega_d} \psi_i, 1 \rangle =
+  \int_{\Omega_d} \psi_i(\mathbf{s}) \partial \mathbf{s} . \]</span></p>
+<p>In the case when <span class="math inline">\(r = r_1 = r_2 = \ldots =
+r_k\)</span> we have <span class="math inline">\(\mathbf{R}_r =
+\mathbf{C}+\frac{r^2}{8}\mathbf{G}\)</span> and <span class="math inline">\(\mathbf{\tilde{C}}_r = \frac{\pi
+r^2}{2}\mathbf{\tilde{C}}\)</span> giving <span class="math display">\[
+\mathbf{Q} = \frac{2}{\pi\sigma^2}(
+\frac{1}{r^2}\mathbf{C}\mathbf{\tilde{C}}^{-1}\mathbf{C} +
+\frac{1}{8}\mathbf{C}\mathbf{\tilde{C}}^{-1}\mathbf{G} +
+\frac{1}{8}\mathbf{G}\mathbf{\tilde{C}}^{-1}\mathbf{C} +
+\frac{r^2}{64}\mathbf{G}\mathbf{\tilde{C}}^{-1}\mathbf{G}
+) \]</span> which coincides with the stationary case in <span class="citation">Lindgren and Rue (2015)</span>, when using <span class="math inline">\(\tilde{\mathbf{C}}\)</span> in place of <span class="math inline">\(\mathbf{C}\)</span>.</p>
+</div>
+<div id="implementation" class="section level1">
+<h1>Implementation</h1>
+<p>In practice we define <span class="math inline">\(r_d\)</span> as
+<span class="math inline">\(r_d = p_d r\)</span>, for known <span class="math inline">\(p_1,\ldots,p_k\)</span> constants. This gives
+<span class="math display">\[ \mathbf{\tilde{C}}_r =
+\frac{\pi r^2}{2}\sum_{d=1}^kp_d^2\mathbf{\tilde{C}}_d =
+\frac{\pi r^2}{2} \mathbf{\tilde{C}}_{p_1,\ldots,p_k}
+\textrm{ and }
+\frac{1}{8}\sum_{d=1}^kr_d^2\mathbf{G}_d =
+\frac{r^2}{8}\sum_{d=1}^kp_d^2\mathbf{\tilde{G}}_d =
+\frac{r^2}{8}\mathbf{\tilde{G}}_{p_1,\ldots,p_k}
+\]</span> where <span class="math inline">\(\mathbf{\tilde{C}}_{p_1,\ldots,p_k}\)</span> and
+<span class="math inline">\(\mathbf{\tilde{G}}_{p_1,\ldots,p_k}\)</span>
+are pre-computed.</p>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-bakka2019barrier" class="csl-entry">
+Bakka, H., J. Vanhatalo, J. Illian, D. Simpson, and H. Rue. 2019.
+<span>“Non-Stationary Gaussian Models with Physical Barriers.”</span>
+<em>Spatial Statistics</em> 29 (March): 268–88. https://doi.org/<a href="https://doi.org/10.1016/j.spasta.2019.01.002">https://doi.org/10.1016/j.spasta.2019.01.002</a>.
+</div>
+<div id="ref-lindgren2015bayesian" class="csl-entry">
+Lindgren, Finn, and Havard Rue. 2015. <span>“<span>B</span>ayesian
+Spatial Modelling with <span>R-INLA</span>.”</span> <em>Journal of
+Statistical Software</em> 63 (19): 1–25.
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

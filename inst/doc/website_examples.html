@@ -27,31 +27,15 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
 
@@ -257,10 +241,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div id="vignettes" class="section level2">
 <h2>Vignettes</h2>
-<p>These examples/tutorials are available on (<a href="https://eliaskrainski.github.io/INLAspacetime/" class="uri">https://eliaskrainski.github.io/INLAspacetime/</a>)</p>
+<p>These potentially long running examples/tutorials are available on
+(<a href="https://eliaskrainski.github.io/INLAspacetime/" class="uri">https://eliaskrainski.github.io/INLAspacetime/</a>)</p>
 <ul>
-<li><a href="https://eliaskrainski.github.io/INLAspacetime/articles/web/barrierExample.html">A barrier model illustration</a></li>
-<li><a href="https://eliaskrainski.github.io/INLAspacetime/articles/web/piemonte.html">The Piemonte dataset example</a></li>
+<li><a href="https://eliaskrainski.github.io/INLAspacetime/articles/web/barrierExample.html">A
+barrier model illustration</a></li>
+<li><a href="https://eliaskrainski.github.io/INLAspacetime/articles/web/piemonte.html">The
+Piemonte dataset example</a></li>
 </ul>
 <!-- ## Package vignettes -->
 <!-- These package vignettes are also available on -->

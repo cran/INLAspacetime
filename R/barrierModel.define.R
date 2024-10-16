@@ -2,7 +2,8 @@
 #'
 #' @param mesh a spatial mesh
 #' @param barrier.triangles a integer vector to specify which
-#' triangles centers are in the barrier domain
+#' triangles centers are in the barrier domain,
+#' or a list with integer vector if more than one.
 #' @param prior.range numeric vector containing U and a
 #' to define the probability statements P(range < U) = a
 #' used to setup the PC-prior for range.
@@ -49,9 +50,24 @@ barrierModel.define <-
     bfem <- INLAspacetime::mesh2fem.barrier(mesh, barrier.triangles)
     n <- nrow(bfem$I)
 
+    if(!is.list(barrier.triangles)) {
+      barrier.triangles <- list(barrier.triangles)
+    }
+    no <- length(barrier.triangles) + 1
+    if(length(range.fraction) == 1) {
+      range.fraction <- rep(range.fraction, no-1)
+    } else {
+      stopifnot(length(range.fraction)==(no-1))
+    }
+
     Imat <- bfem$I
-    Dmat <- bfem$D[[1]] + bfem$D[[2]] * range.fraction^2
-    iC <- Diagonal(n, 1 / (bfem$C[[1]] + bfem$C[[2]] * range.fraction^2))
+    Dmat <- bfem$D[[1]]
+    CC <- bfem$C[[1]]
+    for(o in 2:no) {
+      CC <- CC + bfem$C[[o]] * (range.fraction[o-1]^2)
+      Dmat <- Dmat +  bfem$D[[o]] * (range.fraction[o-1]^2)
+    }
+    iC <- Diagonal(n, 1 / CC)
 
     lmats <- upperPadding(
       list(

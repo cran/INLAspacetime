@@ -13,16 +13,17 @@ worldMap(
 }
 \arguments{
 \item{crs}{a string with the projection.
-Default is the Mollweide projection with units in kilometers.}
+Default is the Mollweide projection
+with units in kilometers.}
 
-\item{scale}{see the help from the 'ne_countries'
-of the 'rnaturalearth' package}
+\item{scale}{The scale of map to return.
+Please see the help of 'ne_countries' function
+from the 'rnaturalearth' package.}
 
-\item{returnclass}{please see the
-\link[rnaturalearth:ne_countries]{rnaturalearth::ne_countries} help.}
-}
-\value{
-the world map of the countries.
+\item{returnclass}{A string determining the class
+of the spatial object to return.
+Please see the help of 'ne_countries' function
+from the 'rnaturalearth' package.}
 }
 \description{
 Retrieve the map of the countries
