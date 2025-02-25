@@ -25,55 +25,7 @@
  *        Thuwal 23955-6900, Saudi Arabia
  */
 
-#include "cgeneric_defs.h"
-
-double gSconstant(double lgs, int alpha)
-{
-	double c3S = 0.0;				       // the remainding C.S2 part that depends on gamma_s:
-	// sum_k (1 + 2k) / [ gamma_s^2 + k(k+1) ]^alpha
-	double gs2 = exp(2 * lgs);			       // gamma_s^2
-	double gs2small = 0.25, gs2big = 4.0;
-	int ialpha = ((int) alpha);
-	int isalphaInt = fabs(((double) ialpha) - alpha) < 0.0001;
-	if (ialpha > 4L)
-		isalphaInt = 0L;			       // to work in the c3S computation
-	if (gs2 < gs2small) {
-		c3S = -0.5 * alpha * log(gs2);		       // approximation for small gamma_s
-	} else {
-		if (gs2 < gs2big) {
-			if (isalphaInt) {
-				if (ialpha == 1L) {
-					for (int k = 0; k < 50; k++) {
-						c3S += (1 + 2 * (double) k) / (gs2 + (double) ((k * (k + 1))));
-					}
-				}
-				if (ialpha == 2L) {
-					for (int k = 0; k < 50; k++) {
-						c3S += (1 + 2 * (double) k) / pow2(gs2 + (double) ((k * (k + 1))));
-					}
-				}
-				if (ialpha == 3L) {
-					for (int k = 0; k < 50; k++) {
-						c3S += (1 + 2 * (double) k) / pow3(gs2 + (double) ((k * (k + 1))));
-					}
-				}
-				if (ialpha == 4L) {
-					for (int k = 0; k < 50; k++) {
-						c3S += (1 + 2 * (double) k) / pow4(gs2 + (double) ((k * (k + 1))));
-					}
-				}
-			} else {
-				for (int k = 0; k < 50; k++) {
-					c3S += (1 + 2 * (double) k) / pow(gs2 + (double) ((k * (k + 1))), alpha);
-				}
-			}
-			c3S = 0.5 * log(c3S);
-		} else {
-			c3S = 0.5 * ((1.0 - alpha) * log(gs2) - log(alpha - 1.0));	// large gamma_s
-		}
-	}
-	return (c3S);
-}
+#include "INLAspacetime.h"
 
 // This function uses the padded matrices with zeroes
 double *inla_cgeneric_sstspde(inla_cgeneric_cmd_tp cmd, double *theta, inla_cgeneric_data_tp * data)
@@ -94,21 +46,16 @@ double *inla_cgeneric_sstspde(inla_cgeneric_cmd_tp cmd, double *theta, inla_cgen
 	assert(debug >= 0);				       // just to 'find an use for "debug" ...'
 	if (debug>0) debug = 1;
 
-	assert(!strcasecmp(data->ints[2]->name, "verbose"));
-	int verbose = data->ints[2]->ints[0];
-	assert(verbose >= 0);
-	if (verbose>0) verbose = 1;
-
-	assert(!strcasecmp(data->ints[3]->name, "Rmanifold"));
-	int Rmanifold = data->ints[3]->ints[0];
+	assert(!strcasecmp(data->ints[2]->name, "Rmanifold"));
+	int Rmanifold = data->ints[2]->ints[0];
 	assert(Rmanifold >= 0);
 
-	assert(!strcasecmp(data->ints[4]->name, "dimension"));
-	int dimension = data->ints[4]->ints[0];
+	assert(!strcasecmp(data->ints[3]->name, "dimension"));
+	int dimension = data->ints[3]->ints[0];
 	assert(dimension > 0);
 
-	assert(!strcasecmp(data->ints[5]->name, "aaa"));
-	inla_cgeneric_vec_tp *aaa = data->ints[5];
+	assert(!strcasecmp(data->ints[4]->name, "aaa"));
+	inla_cgeneric_vec_tp *aaa = data->ints[4];
 	assert(aaa->len == 3);
 	double alphas = ((double) aaa->ints[1]);
 	double alpha = ((double) aaa->ints[2]) + alphas * (((double) aaa->ints[0]) - 0.5);
@@ -117,17 +64,17 @@ double *inla_cgeneric_sstspde(inla_cgeneric_cmd_tp cmd, double *theta, inla_cgen
 	// if(ialpha>4L) isalphaInt = 0L; // to work in the c3S computation
 	double aaux = 0.5 * ((double) dimension) - alpha;
 
-	assert(!strcasecmp(data->ints[6]->name, "nm"));
-	int nm = data->ints[6]->ints[0];
+	assert(!strcasecmp(data->ints[5]->name, "nm"));
+	int nm = data->ints[5]->ints[0];
 	assert(nm > 0);
 	double params[nm];
 
-	assert(!strcasecmp(data->ints[7]->name, "ii"));
-	inla_cgeneric_vec_tp *ii = data->ints[7];
+	assert(!strcasecmp(data->ints[6]->name, "ii"));
+	inla_cgeneric_vec_tp *ii = data->ints[6];
 	M = ii->len;
 
-	assert(!strcasecmp(data->ints[8]->name, "jj"));
-	inla_cgeneric_vec_tp *jj = data->ints[8];
+	assert(!strcasecmp(data->ints[7]->name, "jj"));
+	inla_cgeneric_vec_tp *jj = data->ints[7];
 	assert(M == jj->len);
 
 	assert(!strcasecmp(data->doubles[0]->name, "cc"));
@@ -205,8 +152,13 @@ double *inla_cgeneric_sstspde(inla_cgeneric_cmd_tp cmd, double *theta, inla_cgen
 
 		// map to gamma_e depends on the manifold
 		if (Rmanifold == 0) {			       // if sphere (Rmanifold==0)
-			c3 += gSconstant(lg[0], alpha);	       // now c3 accounts for gamma_s
-			if (ifix[2] == 1) {
+//			c3 += gSconstant(lg[0], alpha);	       // now c3 accounts for gamma_s
+		  // C_sphere(gamma_s=\kappa,alpha) in Eq. (23) of
+		  // Lindgren et. al. (2024) <doi: 10.57645/20.8080.02.13>
+		  double lgs2 = 2.0 * lg[0], ltau2;
+		  CSphere_gamma_alpha(&lgs2, &alpha, &ltau2);
+		  c3 += ltau2 * 0.5;
+		  if (ifix[2] == 1) {
 				lg[2] = c3 - 0.5 * lg[1] - log(psigma->doubles[0]);
 			} else {
 				lg[2] = c3 - 0.5 * lg[1] - theta[ith++];
@@ -233,7 +185,7 @@ double *inla_cgeneric_sstspde(inla_cgeneric_cmd_tp cmd, double *theta, inla_cgen
 		}
 		//fclose(fp);
 
-//		if (verbose | debug) {
+//		if (debug) {
 //			fprintf(stderr, "theta = ");
 //			for (int i = 0; i < nth; i++)
 //				fprintf(stderr, "%f ", theta[i]);
@@ -318,20 +270,22 @@ double *inla_cgeneric_sstspde(inla_cgeneric_cmd_tp cmd, double *theta, inla_cgen
 		// PC-priors
 		ret[0] = 0.0;
 		ith = 0;
-		double daux = 0.5 * (double) dimension;
+		double daux = 0.5 * ((double) dimension), lam;
 		if (ifix[0] == 0) {
-			double lam1 = -log(prs->doubles[1]) * pow(prs->doubles[0], daux);
-			ret[0] += log(lam1) - daux * theta[ith] - lam1 * exp(-daux * theta[ith]) + log(daux);
+			lam = -log(prs->doubles[1]) * pow(prs->doubles[0], daux);
+//			ret[0] += log(lam) - daux * theta[ith] - lam * exp(-daux * theta[ith]) + log(daux);
+			ret[0] += pclogrange(theta[ith], lam, dimension);
 			ith++;
 		}
 		if (ifix[1] == 0) {
-			double lam2 = -log(prt->doubles[1]) * sqrt(prt->doubles[0]);
-			ret[0] += log(lam2) - 0.5 * theta[ith] - lam2 * exp(-0.5 * theta[ith]) + log(0.5);
+			lam = -log(prt->doubles[1]) * sqrt(prt->doubles[0]);
+//			ret[0] += log(lam) - 0.5 * theta[ith] - lam * exp(-0.5 * theta[ith]) + log(0.5);
+			ret[0] += pclogrange(theta[ith], lam, 1L);
 			ith++;
 		}
 		if (ifix[2] == 0) {
-			double lam3 = -log(psigma->doubles[1]) / psigma->doubles[0];
-			ret[0] += log(lam3) + theta[ith] - lam3 * exp(theta[ith]);
+			lam = -log(psigma->doubles[1]) / psigma->doubles[0];
+			ret[0] += pclogsigma(theta[ith], lam);
 			ith++;
 		}
 		assert(ith == nth);

@@ -15,9 +15,11 @@ no-suggestions](https://github.com/eliaskrainski/INLAspacetime/workflows/R-CMD-c
 <!-- badges: end -->
 
 This is a R package to implement certain spatial and spatio-temporal
-models taking use to the `cgeneric` interface in the INLA package. This
-interface is a way to implement models by writing `C` code to build the
-precision matrix compiling it so that INLA can use it internally.
+models, including some of the spatio-temporal models proposed
+[here](https://www.idescat.cat/sort/sort481/48.1.1.Lindgren-etal.pdf).
+It uses the `cgeneric` interface in the INLA package, to implement
+models by writing `C` code to build the precision matrix compiling it so
+that INLA can use it internally.
 
 ## Installation
 
@@ -63,10 +65,9 @@ remotes::install_github("eliaskrainski/INLAspacetime",  build_vignettes=TRUE)
 2.  the barrier model proposed in
     <https://doi.org/10.1016/j.spasta.2019.01.002>
 
-# Example
+# A spacetime example
 
-This is a basic example which fit a spacetime model for some fake data.
-The model fitting using **inlabru** facilitates coding.
+Simulate some fake data.
 
 ``` r
 set.seed(1)
@@ -84,23 +85,22 @@ str(dataf)
 #>  $ y   : num  -0.00577 2.40465 0.76359 -0.79901 -1.14766
 ```
 
-Loading the packages:
+Loading packages:
 
 ``` r
+library(fmesher)
 library(INLA)
 library(INLAspacetime)
-#> Loading required package: fmesher
-library(inlabru)
 ```
 
 Define spatial and temporal discretization meshes
 
 ``` r
-smesh <- inla.mesh.2d(
+smesh <- fm_mesh_2d(
   loc = cbind(0,0), 
   max.edge = 5, 
   offset = 2)
-tmesh <- inla.mesh.1d(
+tmesh <- fm_mesh_1d(
   loc = 0:5)
 ```
 
@@ -119,6 +119,84 @@ stmodel <- stModel.define(
     )
 ```
 
+## Fit the model
+
+Define a projector matrix from the spatial and temporal meshes to the
+data
+
+``` r
+Aproj <- inla.spde.make.A(
+    mesh = smesh,
+    loc = cbind(dataf$s1, dataf$s2),
+    group = dataf$time,
+    group.mesh = tmesh
+)
+```
+
+Create a ‘fake’ column to be used as index. in the `f()` term
+
+``` r
+dataf$st <- NA
+```
+
+Setting the likelihood precision (as fixed)
+
+``` r
+ctrl.lik <- list(
+  hyper = list(
+    prec = list(
+      initial = 10, 
+      fixed = TRUE)    
+  )
+)
+```
+
+Combine a ‘fake’ index column with \`A.local’
+
+``` r
+fmodel <- y ~ f(st, model = stmodel, A.local = Aproj)
+```
+
+Call the main `INLA` function:
+
+``` r
+fit <- inla(
+    formula = fmodel,
+    data = dataf,
+    control.family = ctrl.lik)
+```
+
+Posterior marginal summaries for fixed effect and the model parameters
+that were not fixed.
+
+``` r
+fit$summary.fixed
+#>                  mean       sd 0.025quant  0.5quant 0.975quant     mode
+#> (Intercept) 0.6933766 4.032586  -6.962245 0.5227216   9.417188 0.555068
+#>                      kld
+#> (Intercept) 7.411114e-05
+fit$summary.hyperpar
+#>                   mean        sd 0.025quant 0.5quant 0.975quant      mode
+#> Theta1 for st 1.199194 0.4918107   0.365412 1.161518   2.277266 0.9750084
+#> Theta2 for st 1.435519 0.1710698   1.103120 1.434030   1.776684 1.4277357
+```
+
+## Using the **inlabru**
+
+``` r
+library(inlabru)
+```
+
+Setting the observation (likelihood) model object
+
+``` r
+data_model <- bru_obs(
+  formula = y ~ ., 
+  family = "gaussian",
+  control.family = ctrl.lik, 
+  data = dataf)
+```
+
 Define the data model: the linear predictor terms
 
 ``` r
@@ -128,48 +206,26 @@ linpred <- ~ 1 +
           model = stmodel)
 ```
 
-Setting the likelihood
-
-``` r
-ctrlf <- list(
-  hyper = list(
-    prec = list(
-      initial = 10, 
-      fixed = TRUE)    
-  )
-)
-datalike <- like(
-  formula = y ~ ., 
-  family = "gaussian",
-  control.family = ctrlf, 
-  data=dataf)
-```
-
 Fitting
 
 ``` r
-result <- 
-  bru(
-    components = linpred,
-    datalike,
-    options = list(
-      control.inla = list(
-        int.strategy = "eb"
-        ),
-      verbose = !TRUE)
-    )
+result <- bru(
+  components = linpred,
+  data_model)
 ```
 
 Summary of the model parameters
 
 ``` r
 result$summary.fixed
-#>                mean       sd 0.025quant  0.5quant 0.975quant      mode kld
-#> Intercept 0.5264782 3.500849   -6.33506 0.5264782   7.388016 0.5264782   0
+#>                mean       sd 0.025quant  0.5quant 0.975quant      mode
+#> Intercept 0.6690379 3.969851  -6.886589 0.5095207   9.213142 0.5379552
+#>                    kld
+#> Intercept 5.713904e-05
 result$summary.hyperpar
-#>                      mean        sd 0.025quant 0.5quant 0.975quant     mode
-#> Theta1 for field 1.190361 0.4867876  0.3624381 1.153754   2.255724 0.972674
-#> Theta2 for field 1.435282 0.1709783  1.1034628 1.433661   1.776664 1.426789
+#>                      mean        sd 0.025quant 0.5quant 0.975quant      mode
+#> Theta1 for field 1.190355 0.4867797  0.3624472 1.153749   2.255702 0.9726699
+#> Theta2 for field 1.435283 0.1709777  1.1034676 1.433660   1.776667 1.4267841
 ```
 
 ## Vignettes
