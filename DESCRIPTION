@@ -1,7 +1,7 @@
 Package: INLAspacetime
 Type: Package
 Title: Spatial and Spatio-Temporal Models using 'INLA'
-Version: 0.1.11
+Version: 0.1.12
 Authors@R: c(
   person("Elias Teixeira", "Krainski", email = "eliaskrainski@gmail.com",
          role = c("cre", "aut", "cph"), 
@@ -35,11 +35,11 @@ Suggests: INLA (>= 24.02.09), inlabru (>= 2.10.1), knitr, ggplot2,
         rmarkdown, parallel, data.table, rnaturalearth
 VignetteBuilder: knitr
 BuildVignettes: true
-Packaged: 2025-02-25 12:27:37 UTC; eliask
+Packaged: 2025-03-14 10:16:47 UTC; eliask
 Author: Elias Teixeira Krainski [cre, aut, cph]
     (<https://orcid.org/0000-0002-7063-2615>),
   Finn Lindgren [aut] (<https://orcid.org/0000-0002-5833-2011>),
   Haavard Rue [aut] (<https://orcid.org/0000-0002-0222-1881>)
 Maintainer: Elias Teixeira Krainski <eliaskrainski@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-02-25 12:40:02 UTC
+Date/Publication: 2025-03-14 12:10:02 UTC

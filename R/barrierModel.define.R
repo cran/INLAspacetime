@@ -20,7 +20,6 @@
 #' @param constr logical to indicate if the integral of the field
 #' over the domain is to be constrained to zero. Default value is FALSE.
 #' @param debug logical indicating if to run in debug mode.
-#' @param verbose logical indicating if to print parameter values.
 #' @param useINLAprecomp logical indicating if is to be used
 #' shared object pre-compiled by INLA.
 #' This will not be considered if the argument
@@ -34,24 +33,42 @@ barrierModel.define <-
   function(mesh, barrier.triangles,
            prior.range, prior.sigma,
            range.fraction = 0.1,
-           constr = FALSE, debug = FALSE, verbose = FALSE,
-           useINLAprecomp = TRUE, libpath = NULL) {
+           constr = FALSE,
+           debug = FALSE,
+           useINLAprecomp = TRUE,
+           libpath = NULL) {
 
-    stopifnot(all(c(
-      length(prior.range),
-      length(prior.sigma) > 1
-    )))
+    stopifnot(length(prior.range)==2)
+    prior.range <- as.numeric(prior.range)
     stopifnot(prior.range[1] > 0)
     stopifnot(prior.range[2] >= 0)
     stopifnot(prior.range[2] < 1)
+
+    stopifnot(length(prior.sigma)==2)
+    prior.sigma <- as.numeric(prior.sigma)
+    stopifnot(prior.sigma[1] > 0)
     stopifnot(prior.sigma[2] >= 0)
     stopifnot(prior.sigma[2] < 1)
-    stopifnot(prior.sigma[1] > 0)
 
+    INLAversion <- check_package_version_and_load(
+      pkg = "INLA",
+      minimum_version = "24.10.07",
+      quietly = TRUE
+    )
     if (is.null(libpath)) {
+      if(length(useINLAprecomp)>1) {
+        warning("length(useINLAprecomp)>1, first taken!")
+        useINLAprecomp <- useINLAprecomp[1]
+      }
+      stopifnot(is.logical(useINLAprecomp))
+      if(is.na(INLAversion) & useINLAprecomp) {
+        stop("Update INLA or try `useINLAprecomp = FALSE`!")
+      }
       if (useINLAprecomp) {
+        hasverbose <- (INLAversion<="25.02.10") ## to work with old C versions
         libpath <- INLA::inla.external.lib("INLAspacetime")
       } else {
+        hasverbose <- FALSE
         libpath <- system.file("libs", package = "INLAspacetime")
         if (Sys.info()["sysname"] == "Windows") {
           libpath <- file.path(libpath, "INLAspacetime.dll")
@@ -59,6 +76,8 @@ barrierModel.define <-
           libpath <- file.path(libpath, "INLAspacetime.so")
         }
       }
+    } else {
+      hasverbose <- FALSE
     }
     stopifnot(file.exists(libpath))
 
@@ -95,18 +114,30 @@ barrierModel.define <-
     )
     stopifnot(n == nrow(lmats$graph))
 
+    args0 <- list(
+      model = "inla_cgeneric_barrier",
+      shlib = libpath,
+      n = as.integer(n),
+      debug = as.integer(debug)
+    )
+    if(hasverbose) { ## to work with old C versions
+      args0$verbose <- as.integer(0)
+    }
+    if(INLAversion<="25.02.10") {
+      args0$prs <- prior.range
+    } else {
+      args0$prange <- prior.range
+    }
+    args0$psigma <- prior.sigma
+
     the_model <- do.call(
       "inla.cgeneric.define",
-      list(
-        model = "inla_cgeneric_barrier",
-        shlib = libpath,
-        n = as.integer(n),
-        debug = as.integer(debug),
-        prange = prior.range, ## TO DO: name on current CRAN version, change to 'prange'
-        psigma = prior.sigma,
+      c(args0,
+        list(
         ii = lmats$graph@i,
         jj = lmats$graph@j,
         xx = t(lmats$xx)
+      )
       )
     )
     if (constr) {

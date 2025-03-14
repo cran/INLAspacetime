@@ -1,7 +1,7 @@
 
-/* cgeneric_defs.h
+/* INLAspacetime.h
  *
- * Copyright (C) 2022-2023 Elias Krainski
+ * Copyright (C) 2022-2025 Elias Krainski
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,9 +76,7 @@ inla_cgeneric_func_tp inla_cgeneric_barrier;
 double pclogrange(double logrange, double lamda, int dim);
 double pclogsigma(double logsigma, double lamda);
 void CSphere_gamma_alpha(double *lnGamma2, double *dalpha, double *cska);
-void ar2cov(int *n, int *k,
-            double *a1, double *a2,
-            double *r);
+void ar2cov(int *n, int *k, double *a1, double *a2, double *r);
 
 __END_DECLS
 #endif

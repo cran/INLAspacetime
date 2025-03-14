@@ -21,6 +21,22 @@ It uses the `cgeneric` interface in the INLA package, to implement
 models by writing `C` code to build the precision matrix compiling it so
 that INLA can use it internally.
 
+## We have implemented
+
+1.  some of the models presented in *A diffusion-based spatio-temporal
+    extension of Gaussian Matérn fields* (2024). *Finn Lindgren, Haakon
+    Bakka, David Bolin, Elias Krainski and Håvard Rue*. SORT 48 (1)
+    January-June 2024, 3-66.
+    (<https://www.idescat.cat/sort/sort481/48.1.1.Lindgren-etal.pdf>)
+
+2.  the barrier (and transparent barriers) model proposed in
+    <https://doi.org/10.1016/j.spasta.2019.01.002>
+
+## Vignettes
+
+Please check
+[here](https://eliaskrainski.github.io/INLAspacetime/articles/)
+
 ## Installation
 
 The ‘INLA’ package is a suggested one, but you will need it for actually
@@ -57,14 +73,6 @@ remotes::install_github("eliaskrainski/INLAspacetime",  build_vignettes=TRUE)
 <!-- install.packages("INLAspacetime") -->
 <!-- ``` -->
 
-## We have implemented
-
-1.  some of the models presented in
-    <https://www.idescat.cat/sort/sort481/48.1.1.Lindgren-etal.pdf>
-
-2.  the barrier model proposed in
-    <https://doi.org/10.1016/j.spasta.2019.01.002>
-
 # A spacetime example
 
 Simulate some fake data.
@@ -91,6 +99,7 @@ Loading packages:
 library(fmesher)
 library(INLA)
 library(INLAspacetime)
+#> see more on https://eliaskrainski.github.io/INLAspacetime
 ```
 
 Define spatial and temporal discretization meshes
@@ -117,6 +126,9 @@ stmodel <- stModel.define(
         psigma = c(1, 0.1) ## P(sigma > 1) = 0.1
         )
     )
+#> Warning in stModel.define(smesh = smesh, tmesh = tmesh, model = "121",
+#> control.priors = list(prs = c(1, : Setting 'useINLAprecomp = FALSE' to use new
+#> code.
 ```
 
 ## Fit the model
@@ -151,7 +163,7 @@ ctrl.lik <- list(
 )
 ```
 
-Combine a ‘fake’ index column with \`A.local’
+Combine a ‘fake’ index column with `A.local`
 
 ``` r
 fmodel <- y ~ f(st, model = stmodel, A.local = Aproj)
@@ -171,14 +183,14 @@ that were not fixed.
 
 ``` r
 fit$summary.fixed
-#>                  mean       sd 0.025quant  0.5quant 0.975quant     mode
-#> (Intercept) 0.6933766 4.032586  -6.962245 0.5227216   9.417188 0.555068
+#>                 mean      sd 0.025quant  0.5quant 0.975quant      mode
+#> (Intercept) 0.693389 4.03265  -6.962331 0.5227188   9.417425 0.5550712
 #>                      kld
-#> (Intercept) 7.411114e-05
+#> (Intercept) 7.398472e-05
 fit$summary.hyperpar
-#>                   mean        sd 0.025quant 0.5quant 0.975quant      mode
-#> Theta1 for st 1.199194 0.4918107   0.365412 1.161518   2.277266 0.9750084
-#> Theta2 for st 1.435519 0.1710698   1.103120 1.434030   1.776684 1.4277357
+#>                   mean        sd 0.025quant 0.5quant 0.975quant     mode
+#> Theta1 for st 1.199222 0.4918533  0.3653818 1.161539   2.277396 0.974993
+#> Theta2 for st 1.435517 0.1710676  1.1031120 1.434032   1.776667 1.427752
 ```
 
 ## Using the **inlabru**
@@ -218,17 +230,12 @@ Summary of the model parameters
 
 ``` r
 result$summary.fixed
-#>                mean       sd 0.025quant  0.5quant 0.975quant      mode
-#> Intercept 0.6690379 3.969851  -6.886589 0.5095207   9.213142 0.5379552
+#>                mean       sd 0.025quant 0.5quant 0.975quant      mode
+#> Intercept 0.6690302 3.970182  -6.887199 0.509471   9.214066 0.5379221
 #>                    kld
-#> Intercept 5.713904e-05
+#> Intercept 5.683968e-05
 result$summary.hyperpar
 #>                      mean        sd 0.025quant 0.5quant 0.975quant      mode
-#> Theta1 for field 1.190355 0.4867797  0.3624472 1.153749   2.255702 0.9726699
-#> Theta2 for field 1.435283 0.1709777  1.1034676 1.433660   1.776667 1.4267841
+#> Theta1 for field 1.190438 0.4868951  0.3623876 1.153809   2.256071 0.9726162
+#> Theta2 for field 1.435268 0.1709839  1.1033563 1.433674   1.776580 1.4269195
 ```
-
-## Vignettes
-
-Please check it out at the
-[Tutorials](https://eliaskrainski.github.io/INLAspacetime/)
